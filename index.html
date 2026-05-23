@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+
+  <!-- viewport-fit=cover lets the page draw into the notch / home-indicator area.
+       No maximum-scale lock — touch-action handles zoom surgically instead. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <!-- The PWA manifest: display:standalone is what removes browser chrome. -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- iOS-specific: belt-and-suspenders for the standalone runtime. -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="FS Demo" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
+  <!-- Tints the status bar area in standalone mode. -->
+  <meta name="theme-color" content="#0f1115" />
+
+  <title>Fullscreen Demo</title>
+
+  <style>
+    :root {
+      --bg: #0f1115;
+      --ink: #f3f3f1;
+      --muted: #8b8f99;
+      --accent: #ff8a4c;
+      --cool: #78c8ff;
+      color-scheme: dark;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+      /* manipulation = panning + pinch only. Kills double-tap zoom and
+         the 300ms click delay, while keeping accessible pinch-zoom. */
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-text-size-adjust: 100%;
+      overscroll-behavior: none;
+    }
+
+    body {
+      /* dvh tracks the live viewport as iOS chrome slides in/out */
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      /* respect the notch + home indicator */
+      padding:
+        env(safe-area-inset-top)
+        env(safe-area-inset-right)
+        env(safe-area-inset-bottom)
+        env(safe-area-inset-left);
+      background:
+        radial-gradient(120% 80% at 50% 0%, #1b2030 0%, var(--bg) 60%);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      text-align: center;
+      padding: 2rem 1.5rem;
+    }
+
+    .mark {
+      width: 92px; height: 92px;
+      border-radius: 24px;
+      display: grid; place-items: center;
+      background: #161922;
+      box-shadow: 0 0 0 1px #262b38, 0 24px 48px -20px #000;
+    }
+    .mark span {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 4px solid var(--accent);
+      box-shadow: 0 0 0 9px transparent, 8px 8px 0 -3px var(--cool);
+    }
+
+    h1 {
+      font-size: clamp(1.6rem, 7vw, 2.2rem);
+      letter-spacing: -0.02em;
+      font-weight: 700;
+    }
+    p { color: var(--muted); max-width: 30ch; line-height: 1.55; }
+
+    .status {
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.6rem 1.1rem;
+      border-radius: 999px;
+      border: 1px solid #2a2f3c;
+    }
+    .status.standalone { color: var(--accent); border-color: var(--accent); }
+    .status.browser    { color: var(--cool); }
+
+    button {
+      font: inherit; font-weight: 600;
+      color: var(--bg); background: var(--ink);
+      border: 0; border-radius: 14px;
+      padding: 0.85rem 1.6rem;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform 0.12s ease;
+    }
+    button:active { transform: scale(0.96); }
+
+    footer {
+      text-align: center;
+      color: #545a68;
+      font-size: 0.8rem;
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="mark"><span></span></div>
+    <h1>Fullscreen Demo</h1>
+    <p>Add this page to your iOS home screen, then open it from there to see it run with no browser chrome.</p>
+
+    <div id="status" class="status">checking display mode…</div>
+
+    <button id="counter">tapped 0 times</button>
+  </main>
+
+  <footer id="foot">loading…</footer>
+
+  <script>
+    // --- Detect whether we're running standalone (chrome-free) ---
+    function isStandalone() {
+      return window.matchMedia('(display-mode: standalone)').matches
+          || window.matchMedia('(display-mode: fullscreen)').matches
+          || window.navigator.standalone === true; // older iOS flag
+    }
+
+    const status = document.getElementById('status');
+    if (isStandalone()) {
+      status.textContent = '✓ standalone — no chrome';
+      status.classList.add('standalone');
+    } else {
+      status.textContent = 'in browser — add to home screen';
+      status.classList.add('browser');
+    }
+
+    // --- Trivial interaction so it feels like an app ---
+    let n = 0;
+    const btn = document.getElementById('counter');
+    btn.addEventListener('click', () => {
+      n++;
+      btn.textContent = `tapped ${n} time${n === 1 ? '' : 's'}`;
+    });
+
+    // --- Register the service worker (required for true installability) ---
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => { document.getElementById('foot').textContent = 'service worker active · works offline'; })
+        .catch(() => { document.getElementById('foot').textContent = 'service worker failed to register'; });
+    } else {
+      document.getElementById('foot').textContent = 'service workers unsupported';
+    }
+  </script>
+</body>
+</html>
