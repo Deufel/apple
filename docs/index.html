@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reading the safe area</title>
+<style>
+  :root {
+    --inset-l: env(safe-area-inset-left, 0px);
+    --inset-r: env(safe-area-inset-right, 0px);
+  }
+  body { margin: 0; font-family: system-ui, sans-serif; }
+
+  /* metadata rails — only visible width comes from the inset */
+  .rail {
+    position: fixed; top: 0; bottom: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: #f0efe8; color: #888;
+    font-size: 11px; letter-spacing: 1px;
+    overflow: hidden;
+  }
+  .rail.left  { left: 0;  width: var(--inset-l); }
+  .rail.right { right: 0; width: var(--inset-r); }
+  .rail span { white-space: nowrap; }
+  .rail.left  span { writing-mode: vertical-rl; transform: rotate(180deg); }
+  .rail.right span { writing-mode: vertical-rl; }
+
+  /* reading column stays inside the safe zone */
+  main {
+    padding: 1.5rem;
+    padding-left:  calc(1.5rem + var(--inset-l));
+    padding-right: calc(1.5rem + var(--inset-r));
+  }
+
+  /* portrait / no-notch: insets are 0, so rails have 0 width and
+     the metadata needs an inline home instead */
+  .inline-meta { display: none; font-size: 12px; color: #888; }
+  @media (orientation: portrait) {
+    .inline-meta { display: block; }
+  }
+</style>
+</head>
+<body>
+
+  <aside class="rail left"><span>v2.4.1 · build 8831</span></aside>
+  <aside class="rail right"><span>edited 2m ago · 1,204 words</span></aside>
+
+  <main>
+    <p>Article</p>
+    <h1>Reading the safe area</h1>
+    <p>In landscape on a notched device the side rails gain real width
+       and the metadata appears in the cutout region. Rotate to portrait
+       and the insets collapse to 0 — the rails vanish and the metadata
+       falls back inline.</p>
+    <p class="inline-meta">v2.4.1 · build 8831 — edited 2m ago · 1,204 words</p>
+  </main>
+
+</body>
+</html>
